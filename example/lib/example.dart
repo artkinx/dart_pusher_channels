@@ -8,43 +8,64 @@ void connectToPusher() async {
   // Create an instance PusherChannelsOptions
   // The test options can be accessed from test.pusher.com (using only for test purposes)
   const testOptions = PusherChannelsOptions.fromCluster(
-    scheme: 'wss',
-    cluster: 'mt1',
-    key: 'a0173cd5499b34d93109',
+    scheme: 'ws',
+    host: "api.smartmedicares.com",
+    cluster: 'ap1',
+    key: '71cce1c2945e6df357fc',
     port: 443,
+    shouldSupplyMetadataQueries: false,
   );
+
+  const testOptionUrl = PusherChannelsOptions.fromHost(
+    scheme: "wss",
+    host: "api.smartmedicares.com",
+    key: "71cce1c2945e6df357fc",
+    // shouldSupplyMetadataQueries: false,
+  );
+
+  print(testOptionUrl.uri);
   // Create an instance of PusherChannelsClient
   final client = PusherChannelsClient.websocket(
-    options: testOptions,
+    options: testOptionUrl,
     // Connection exceptions are handled here
     connectionErrorHandler: (exception, trace, refresh) async {
       // This method allows you to reconnect if any error is occurred.
       refresh();
+      print(trace);
+      print(exception);
     },
   );
 
-  // Create instances of Channel
-  PresenceChannel myPresenceChannel = client.presenceChannel(
-    'presence-channel',
-    // Private and Presence channels require users to be authorized.
-    // Use EndpointAuthorizableChannelTokenAuthorizationDelegate to authorize through
-    // an http endpoint or create your own delegate by implementing EndpointAuthorizableChannelAuthorizationDelegate
-    authorizationDelegate: EndpointAuthorizableChannelTokenAuthorizationDelegate
-        .forPresenceChannel(
-      authorizationEndpoint: Uri.parse('https://test.pusher.com/pusher/auth'),
-      headers: const {},
-    ),
-  );
+  // // Create instances of Channel
+  // PresenceChannel myPresenceChannel = client.presenceChannel(
+  //   'presence-channel',
+  //   // Private and Presence channels require users to be authorized.
+  //   // Use EndpointAuthorizableChannelTokenAuthorizationDelegate to authorize through
+  //   // an http endpoint or create your own delegate by implementing EndpointAuthorizableChannelAuthorizationDelegate
+  //   authorizationDelegate: EndpointAuthorizableChannelTokenAuthorizationDelegate
+  //       .forPresenceChannel(
+  //     authorizationEndpoint:
+  //         Uri.parse('https://apis.smartafri.com/broadcasting/auth'),
+  //     headers: const {
+  //       "Authorization":
+  //           "Bearer 1304|HKYbSp0tFei0gEdwTTOpIe7TXxnWcupiflcB54c5da55012e"
+  //     },
+  //   ),
+  // );
   PrivateChannel myPrivateChannel = client.privateChannel(
-    'private-channel',
+    'private-ChatList.2',
     authorizationDelegate:
         EndpointAuthorizableChannelTokenAuthorizationDelegate.forPrivateChannel(
-      authorizationEndpoint: Uri.parse('https://test.pusher.com/pusher/auth'),
-      headers: const {},
+      authorizationEndpoint:
+          Uri.parse('https://api.smartmedicares.com/broadcasting/auth'),
+      headers: const {
+        "Authorization":
+            "Bearer 1304|HKYbSp0tFei0gEdwTTOpIe7TXxnWcupiflcB54c5da55012e"
+      },
     ),
   );
   PublicChannel myPublicChannel = client.publicChannel(
-    'public-channel',
+    'ChatList.2',
   );
 
   // Unlike other SDKs, dart_pusher_channels offers binding to events
@@ -59,32 +80,34 @@ void connectToPusher() async {
 
   // Listen for events of the channel with .bind method
   StreamSubscription<ChannelReadEvent> somePrivateChannelEventSubs =
-      myPrivateChannel.bind('private-MyEvent').listen((event) {
+      myPrivateChannel.bind('message.received').listen((event) {
     print('Event from the private channel fired!');
+    print(event);
   });
   StreamSubscription<ChannelReadEvent> somePublicChannelEventSubs =
-      myPublicChannel.bind('public-MyEvent').listen((event) {
+      myPublicChannel.bind('message.received').listen((event) {
     print('Event from the public channel fired!');
+    print(event);
   });
 
-  // You may use some helpful extension shortcut methods for the predefined channel events.
-  // For example, this one binds to events of the channel with name 'pusher:member_added'
-  StreamSubscription<ChannelReadEvent> presenceMembersAddedSubs =
-      myPresenceChannel.whenMemberAdded().listen((event) {
-    print(
-      'Member added, now members count is ${myPresenceChannel.state?.members?.membersCount}',
-    );
-  });
+  // // You may use some helpful extension shortcut methods for the predefined channel events.
+  // // For example, this one binds to events of the channel with name 'pusher:member_added'
+  // StreamSubscription<ChannelReadEvent> presenceMembersAddedSubs =
+  //     myPresenceChannel.whenMemberAdded().listen((event) {
+  //   print(
+  //     'Member added, now members count is ${myPresenceChannel.state?.members?.membersCount}',
+  //   );
+  // });
 
   // Organizing all subscriptions into 1 for readability
   final allEventSubs = <StreamSubscription?>[
-    presenceMembersAddedSubs,
+    // presenceMembersAddedSubs,
     somePrivateChannelEventSubs,
     somePublicChannelEventSubs,
   ];
   // Organizing all channels for readibility
   final allChannels = <Channel>[
-    myPresenceChannel,
+    // myPresenceChannel,
     myPrivateChannel,
     myPublicChannel,
   ];
@@ -106,35 +129,35 @@ void connectToPusher() async {
 
   // You can trigger events from Private and Presence Channels
 
-  // Somewhere in future
-  await Future.delayed(
-    const Duration(seconds: 5),
-  );
+  // // Somewhere in future
+  // await Future.delayed(
+  //   const Duration(seconds: 5),
+  // );
 
-  myPresenceChannel.trigger(
-    eventName: 'client-event',
-    data: {'hello': 'Hello'},
-  );
+  // myPresenceChannel.trigger(
+  //   eventName: 'client-event',
+  //   data: {'hello': 'Hello'},
+  // );
 
   // If you no longer need a channel - unsubscribe from it. Channel instances are reusable
   // so it is possible to subscribe to it later, if needed, using .subscribe method.
 
-  // Somewhere in future
-  await Future.delayed(const Duration(seconds: 5));
-  myPresenceChannel.unsubscribe();
-  // Somewhere in future
-  await Future.delayed(const Duration(seconds: 5));
-  myPresenceChannel.subscribe();
+  // // Somewhere in future
+  // await Future.delayed(const Duration(seconds: 5));
+  // myPresenceChannel.unsubscribe();
+  // // Somewhere in future
+  // await Future.delayed(const Duration(seconds: 5));
+  // myPresenceChannel.subscribe();
 
-  // If you want to unbind from the event - simply cancel an event subscription.
-  // Somewhere in future
-  await Future.delayed(const Duration(seconds: 5));
-  await presenceMembersAddedSubs.cancel();
+  // // If you want to unbind from the event - simply cancel an event subscription.
+  // // Somewhere in future
+  // await Future.delayed(const Duration(seconds: 5));
+  // await presenceMembersAddedSubs.cancel();
 
   // If you no longer need the client - cancel the connection subscription and dispose it.
 
   // Somewhere in future
-  await Future.delayed(const Duration(seconds: 5));
+  await Future.delayed(const Duration(seconds: 50));
   await connectionSubs.cancel();
   // Consider canceling the event subscriptions to
   for (final subscription in allEventSubs) {
